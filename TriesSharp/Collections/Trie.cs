@@ -2,8 +2,10 @@
 
 namespace TriesSharp.Collections;
 
-public class Trie<TValue> : ITrie<TValue>
+public partial class Trie<TValue> : ITrie<TValue>
 {
+    private readonly TrieNode<TValue> root;
+
     /// <inheritdoc />
     public void Add(ReadOnlySpan<char> key, TValue value)
     {

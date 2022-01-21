@@ -14,14 +14,22 @@ public interface ITrie<TValue> : IReadOnlyTrie<TValue>, IDictionary<ReadOnlyMemo
 
     void Add(string key, TValue value) => Add(key.AsSpan(), value);
 
-    TValue GetOrAdd(ReadOnlyMemory<char> key, TValue value)
+    TValue GetOrAdd(ReadOnlySpan<char> key, TValue value)
     {
-        if (TryGetValue(key.Span, out var v)) return v;
+        if (TryGetValue(key, out var v)) return v;
         Add(key, value);
         return value;
     }
 
+    TValue GetOrAdd(ReadOnlyMemory<char> key, TValue value) => GetOrAdd(key.Span, value);
+
     TValue GetOrAdd(string key, TValue value) => GetOrAdd(key.AsMemory(), value);
+
+    bool Remove(ReadOnlySpan<char> key);
+
+    bool IDictionary<ReadOnlyMemory<char>, TValue>.Remove(ReadOnlyMemory<char> key) => Remove(key.Span);
+
+    bool Remove(string key) => Remove(key.AsSpan());
 
     new TValue this[ReadOnlySpan<char> key] { get; set; }
 

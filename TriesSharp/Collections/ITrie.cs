@@ -57,6 +57,12 @@ public interface IReadOnlyTrie<TValue> : IReadOnlyDictionary<ReadOnlyMemory<char
 
     TValue this[string key] => this[key.AsSpan()];
 
+    bool ContainsKey(ReadOnlySpan<char> key);
+
+    bool IReadOnlyDictionary<ReadOnlyMemory<char>, TValue>.ContainsKey(ReadOnlyMemory<char> key) => ContainsKey(key.Span);
+
+    bool ContainsKey(string key) => ContainsKey(key.AsSpan());
+
     bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)] out TValue value);
 
     bool IReadOnlyDictionary<ReadOnlyMemory<char>, TValue>.TryGetValue(ReadOnlyMemory<char> key, [MaybeNullWhen(false)] out TValue value)
@@ -66,10 +72,18 @@ public interface IReadOnlyTrie<TValue> : IReadOnlyDictionary<ReadOnlyMemory<char
         => TryGetValue(key.AsSpan(), out value);
 
     /// <summary>
-    /// Retrieves the value in the longest prefix of the specified query that exists in the trie.
+    /// Retrieves the value under the key matching the longest prefix of the specified query.
     /// </summary>
     /// <param name="query">a character sequence.</param>
-    /// <returns>corresponding value under the key <c>query[..prefixLength]</c>.</returns>
+    /// <returns>
+    /// the matching key prefix length, and corresponding value under the key.
+    /// Caller can use <c>query[..PrefixLength]</c> later to determine the matching key.
+    /// If there is no match in the trie, the return value will be <c>(-1, default(TValue))</c>.
+    /// </returns>
+    /// <remarks>
+    /// If there is any entry with <see cref="string.Empty"/> as key,
+    /// any matching failure in query will result in <c>(0, this[""])</c> being returned.
+    /// </remarks>
     (int PrefixLength, TValue value) MatchLongestPrefix(ReadOnlySpan<char> query);
 
     /// <inheritdoc cref="MatchLongestPrefix(ReadOnlySpan{char})"/>

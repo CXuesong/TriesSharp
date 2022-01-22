@@ -1,15 +1,26 @@
-﻿using System.Collections;
+﻿using System.Buffers;
+using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 
 namespace TriesSharp.Collections;
 
 public partial class Trie<TValue> : ITrie<TValue>
 {
     private readonly TrieNode<TValue> root;
+    private int _Count;
+    private int _LongestPossibleKeyLength;
+    private const int EnumerableMaxKeyBufferLength = 512;
 
     /// <inheritdoc />
     public void Add(ReadOnlySpan<char> key, TValue value)
     {
-        throw new NotImplementedException();
+        var node = root.GetOrAddChild(key);
+        if (node.HasValue) throw new ArgumentException("Specified key already exists.", nameof(key));
+        node.SetValue(value);
+        _Count++;
+        _LongestPossibleKeyLength = Math.Max(_LongestPossibleKeyLength, key.Length);
     }
 
     /// <inheritdoc />
@@ -27,7 +38,35 @@ public partial class Trie<TValue> : ITrie<TValue>
     /// <inheritdoc />
     public bool Remove(ReadOnlySpan<char> key)
     {
-        throw new NotImplementedException();
+        if (key.IsEmpty)
+        {
+            if (root.UnsetValue())
+            {
+                _Count--;
+                Debug.Assert(_Count >= 0);
+                return true;
+            }
+            return false;
+        }
+        var opParentNode = root;
+        var opChildKey = '\0';
+        var currentNode = root;
+        foreach (var c in key)
+        {
+            currentNode = currentNode.TryGetChild(c);
+            if (currentNode == null) return false;
+            if (currentNode.HasValue || currentNode.ChildrenCount > 1)
+            {
+                opParentNode = currentNode;
+                opChildKey = c;
+            }
+        }
+        var result = opParentNode.RemoveChild(opChildKey);
+        Debug.Assert(result);
+        _Count--;
+        // _PossibleLongestKeyLength may be inaccurate from this point of time.
+        Debug.Assert(_Count >= 0);
+        return result;
     }
 
     /// <inheritdoc />
@@ -39,13 +78,26 @@ public partial class Trie<TValue> : ITrie<TValue>
     /// <inheritdoc />
     public void Clear()
     {
-        throw new NotImplementedException();
+        root.ClearChildren();
+        root.UnsetValue();
+        _Count = 0;
+        _LongestPossibleKeyLength = 0;
     }
 
     /// <inheritdoc />
     public IEnumerator<KeyValuePair<ReadOnlyMemory<char>, TValue>> GetEnumerator()
     {
-        throw new NotImplementedException();
+        if (this._Count == 0) yield break;
+        var buffer = ArrayPool<char>.Shared.Rent(Math.Min(this._LongestPossibleKeyLength, EnumerableMaxKeyBufferLength));
+        try
+        {
+            foreach (var item in this.root.EnumDescendants(buffer, 0))
+                yield return item;
+        }
+        finally
+        {
+            ArrayPool<char>.Shared.Return(buffer);
+        }
     }
 
     /// <inheritdoc />
@@ -58,7 +110,15 @@ public partial class Trie<TValue> : ITrie<TValue>
     /// <inheritdoc />
     public void CopyTo(KeyValuePair<ReadOnlyMemory<char>, TValue>[] array, int arrayIndex)
     {
-        throw new NotImplementedException();
+        if (array == null) throw new ArgumentNullException(nameof(array));
+        if (arrayIndex < 0) throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+        if (arrayIndex + _Count > array.Length) throw new ArgumentException("Target array does not have sufficient space available.");
+        var i = arrayIndex;
+        foreach (var (key, value) in this)
+        {
+            array[i] = KeyValuePair.Create(new ReadOnlyMemory<char>(key.ToArray()), value);
+            i++;
+        }
     }
 
     /// <inheritdoc />
@@ -72,13 +132,17 @@ public partial class Trie<TValue> : ITrie<TValue>
     }
 
     /// <inheritdoc cref="ICollection{T}.Count" />
-    public int Count => throw new NotImplementedException();
+    public int Count => _Count;
+
+    /// <inheritdoc />
+    public bool ContainsKey(ReadOnlySpan<char> key)
+    {
+        var node = root.TryGetChild(key);
+        return node is { HasValue: true };
+    }
 
     /// <inheritdoc cref="IDictionary{TKey,TValue}.ContainsKey" />
-    public bool ContainsKey(ReadOnlyMemory<char> key)
-    {
-        throw new NotImplementedException();
-    }
+    public bool ContainsKey(ReadOnlyMemory<char> key) => ContainsKey(key.Span);
 
     /// <inheritdoc />
     public ICollection<ReadOnlyMemory<char>> Keys { get; } = new KeyCollection();
@@ -89,12 +153,23 @@ public partial class Trie<TValue> : ITrie<TValue>
     /// <inheritdoc cref="ITrie{TValue}.this[ReadOnlySpan{char}]" />
     public TValue this[ReadOnlySpan<char> key]
     {
-        get => throw new NotImplementedException(); 
-        set => throw new NotImplementedException();
+        get
+        {
+            if (key.Length > _LongestPossibleKeyLength) throw new KeyNotFoundException();
+            var node = root.TryGetChild(key);
+            if (node is not { HasValue: true }) throw new KeyNotFoundException();
+            return node.Value;
+        }
+        set
+        {
+            var node = root.GetOrAddChild(key);
+            node.SetValue(value);
+        }
     }
 
     /// <inheritdoc cref="IDictionary{TKey,TValue}.this" />
-    public TValue this[ReadOnlyMemory<char> key] { 
+    public TValue this[ReadOnlyMemory<char> key]
+    {
         get => this[key.Span];
         set => this[key.Span] = value;
     }
@@ -103,27 +178,46 @@ public partial class Trie<TValue> : ITrie<TValue>
     public TValue this[string key] { get => this[key.AsSpan()]; set => this[key.AsSpan()] = value; }
 
     /// <inheritdoc />
-    public bool TryGetValue(ReadOnlySpan<char> key, out TValue value)
+    public bool TryGetValue(ReadOnlySpan<char> key, [MaybeNullWhen(false)] out TValue value)
     {
-        throw new NotImplementedException();
+        value = default;
+        if (key.Length > _LongestPossibleKeyLength) return false;
+        var node = root.TryGetChild(key);
+        if (node is not { HasValue: true }) return false;
+        value = node.Value;
+        return true;
     }
 
     /// <inheritdoc cref="ITrie{TValue}.TryGetValue(ReadOnlyMemory{char},out TValue)" />
-    public bool TryGetValue(ReadOnlyMemory<char> key, out TValue value) => TryGetValue(key.Span, out value);
+    public bool TryGetValue(ReadOnlyMemory<char> key, [MaybeNullWhen(false)] out TValue value) => TryGetValue(key.Span, out value);
 
     /// <inheritdoc />
-    public bool TryGetValue(string key, out TValue value) => TryGetValue(key.AsSpan(), out value);
+    public bool TryGetValue(string key, [MaybeNullWhen(false)] out TValue value) => TryGetValue(key.AsSpan(), out value);
 
     /// <inheritdoc />
     public (int PrefixLength, TValue value) MatchLongestPrefix(ReadOnlySpan<char> query)
     {
-        throw new NotImplementedException();
+        var current = root;
+        var (lastMatchPrefixLength, lastMatch) = root.HasValue ? (0, root) : (-1, null);
+        for (var i = 0; i < query.Length; i++)
+        {
+            current = current.TryGetChild(query[i]);
+            if (current == null) break;
+            if (current.HasValue) (lastMatchPrefixLength, lastMatch) = (i + 1, current);
+        }
+        return (lastMatchPrefixLength, lastMatch == null ? default! : lastMatch.Value);
     }
 
     /// <inheritdoc />
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> EnumEntriesFromPrefix(ReadOnlySpan<char> prefix)
     {
-        throw new NotImplementedException();
+        if (prefix.Length > _LongestPossibleKeyLength) return Enumerable.Empty<KeyValuePair<ReadOnlyMemory<char>, TValue>>();
+        var node = root.TryGetChild(prefix);
+        if (node == null) return Enumerable.Empty<KeyValuePair<ReadOnlyMemory<char>, TValue>>();
+        var keyLength = Math.Max(Math.Min(_LongestPossibleKeyLength, EnumerableMaxKeyBufferLength), prefix.Length + 1);
+        var buffer = GC.AllocateUninitializedArray<char>(keyLength);
+        prefix.CopyTo(buffer.AsSpan());
+        return node.EnumDescendants(buffer, prefix.Length);
     }
 
     /// <inheritdoc />

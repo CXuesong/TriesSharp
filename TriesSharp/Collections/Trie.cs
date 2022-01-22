@@ -5,7 +5,9 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace TriesSharp.Collections;
 
-public partial class Trie<TValue> : ITrie<TValue>
+[DebuggerDisplay("Count = {Count}")]
+[DebuggerTypeProxy(typeof(Trie<>.DebuggerProxy))]
+public class Trie<TValue> : ITrie<TValue>
 {
     private const int EnumerableMaxKeyBufferLength = 512;
 
@@ -55,25 +57,36 @@ public partial class Trie<TValue> : ITrie<TValue>
             }
             return false;
         }
-        var opParentNode = root;
-        var opChildKey = '\0';
         var currentNode = root;
+        // Last node (excluding the node "key") with value or with more than 1 child.
+        TrieNode<TValue>? opParentNode = null;
+        var opChildKey = '\0';
         foreach (var c in key)
         {
-            currentNode = currentNode.TryGetChild(c);
-            if (currentNode == null) return false;
-            if (currentNode.HasValue || currentNode.ChildrenCount > 1)
+            var next = currentNode.TryGetChild(c);
+            if (next == null) return false;
+            if (opParentNode == null || currentNode.HasValue || currentNode.ChildrenCount > 1)
             {
                 opParentNode = currentNode;
                 opChildKey = c;
             }
+            currentNode = next;
         }
-        var result = opParentNode.RemoveChild(opChildKey);
-        Debug.Assert(result);
+        if (currentNode.ChildrenCount > 0)
+        {
+            // This node has children. Do not remove the node. Try to remove value instead.
+            if (!currentNode.UnsetValue()) return false;
+        }
+        else
+        {
+            // Remove the node and its branch.
+            var result = opParentNode!.RemoveChild(opChildKey);
+            Debug.Assert(result);
+        }
         _Count--;
         // _PossibleLongestKeyLength may be inaccurate from this point of time.
         Debug.Assert(_Count >= 0);
-        return result;
+        return true;
     }
 
     /// <inheritdoc />
@@ -351,4 +364,17 @@ public partial class Trie<TValue> : ITrie<TValue>
         /// <inheritdoc />
         bool ICollection<TValue>.IsReadOnly => false;
     }
+
+    private sealed class DebuggerProxy
+    {
+        private readonly Trie<TValue> trie;
+
+        public DebuggerProxy(Trie<TValue> trie)
+        {
+            this.trie = trie;
+        }
+
+        public TrieNode<TValue> Root => trie.root;
+    }
+
 }

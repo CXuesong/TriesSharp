@@ -3,6 +3,8 @@ using System.Diagnostics;
 
 namespace TriesSharp.Collections;
 
+[DebuggerDisplay("{HasValue ? Value?.ToString() : \"<No value>\"}, Count = {ChildrenCount}")]
+[DebuggerTypeProxy(typeof(TrieNode<>.DebuggerProxy))]
 internal sealed class TrieNode<TValue>
 {
 
@@ -18,10 +20,9 @@ internal sealed class TrieNode<TValue>
         HasValue = true;
     }
 
-    // This function is seldom called. We often remove the whole node from parent.
     public bool UnsetValue()
     {
-        if (HasValue) return false;
+        if (!HasValue) return false;
         HasValue = false;
         Value = default!;
         return true;
@@ -139,6 +140,19 @@ internal sealed class TrieNode<TValue>
                 ArrayPool<char>.Shared.Return(keyBuffer);
             }
         }
+    }
+
+    private sealed class DebuggerProxy
+    {
+        private readonly TrieNode<TValue> node;
+
+        public DebuggerProxy(TrieNode<TValue> node)
+        {
+            this.node = node;
+        }
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public ICollection<KeyValuePair<char, TrieNode<TValue>>>? Children => node.children;
     }
 
 }

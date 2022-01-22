@@ -142,6 +142,34 @@ internal sealed class TrieNode<TValue>
         }
     }
 
+    public void TrimExcess()
+    {
+        if (this.children == null) return;
+        var nodeStack = new Stack<TrieNode<TValue>>();
+        var childIndexStack = new Stack<int>();
+        nodeStack.Push(this);
+        childIndexStack.Push(0);
+        while (nodeStack.Count > 0)
+        {
+            var current = nodeStack.Peek();
+            var i = childIndexStack.Pop();
+            if (i >= current.children!.Count)
+            {
+                nodeStack.Pop();
+                continue;
+            }
+            childIndexStack.Push(i + 1);
+            var child = current.children.Values[i];
+            if (child.children != null)
+            {
+                Debug.Assert(child.children.Count > 0);
+                child.children.TrimExcess();
+                nodeStack.Push(child);
+                childIndexStack.Push(0);
+            }
+        }
+    }
+
     private sealed class DebuggerProxy
     {
         private readonly TrieNode<TValue> node;

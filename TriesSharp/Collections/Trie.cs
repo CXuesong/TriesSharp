@@ -257,6 +257,11 @@ public class Trie<TValue> : ITrie<TValue>
         return node.EnumDescendants(buffer, prefix.Length);
     }
 
+    public void TrimExcess()
+    {
+        root.TrimExcess();
+    }
+
     /// <inheritdoc />
     bool ICollection<KeyValuePair<ReadOnlyMemory<char>, TValue>>.IsReadOnly => false;
 

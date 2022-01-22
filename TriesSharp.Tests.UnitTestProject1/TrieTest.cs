@@ -49,6 +49,8 @@ public class TrieTest
             AssertStateEquality();
         }
 
+        trie.TrimExcess();
+
         for (int i = 0; i < wordList.Count; i++)
         {
             if (baseline.Remove(wordList[i]))

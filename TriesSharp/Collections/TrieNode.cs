@@ -105,9 +105,10 @@ internal sealed class TrieNode<TValue>
                 }
                 childIndexStack.Push(i + 1);
                 var child = current.children.Values[i];
+                var keyCharIndex = prefixLength + nodeStack.Count - 1;
                 if (keyBuffer != null)
                 {
-                    if (prefixLength + i >= keyBuffer.Length)
+                    if (keyCharIndex >= keyBuffer.Length)
                     {
                         var newBuffer = ArrayPool<char>.Shared.Rent(keyBuffer.Length * 2);
                         keyBuffer.CopyTo(newBuffer, 0);
@@ -115,13 +116,13 @@ internal sealed class TrieNode<TValue>
                         keyBuffer = newBuffer;
                         reallocatedBuffer = true;
                     }
-                    keyBuffer[prefixLength + i] = current.children.Keys[i];
+                    keyBuffer[keyCharIndex] = current.children.Keys[i];
                 }
                 if (child.HasValue)
                 {
                     yield return KeyValuePair.Create(keyBuffer == null
                         ? default
-                        : new ReadOnlyMemory<char>(keyBuffer, 0, prefixLength + i + 1), child.Value);
+                        : new ReadOnlyMemory<char>(keyBuffer, 0, keyCharIndex + 1), child.Value);
                 }
                 if (child.children is { Count: > 0 })
                 {

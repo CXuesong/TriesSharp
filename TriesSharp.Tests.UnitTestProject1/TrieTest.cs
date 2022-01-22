@@ -21,6 +21,9 @@ public class TrieTest
     [InlineData(TextResourceLoader.TaleOfTwoCities1, 50)]
     [InlineData(TextResourceLoader.TaleOfTwoCities1, 100)]
     [InlineData(TextResourceLoader.TaleOfTwoCities1, -1)]
+    [InlineData(TextResourceLoader.ShijiSnippet1, 10)]
+    [InlineData(TextResourceLoader.ShijiSnippet1, 100)]
+    [InlineData(TextResourceLoader.ShijiSnippet1, -1)]
     public void DictionaryApiTest(string fileName, int wordCount)
     {
         var baseline = new Dictionary<string, int>();

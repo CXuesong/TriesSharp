@@ -13,6 +13,8 @@ namespace TriesSharp.Tests.UnitTestProject1
 
         public const string TaleOfTwoCities1 = "ToTC1.txt";
 
+        public const string ShijiSnippet1 = "Shiji1.txt";
+
         public static List<string> LoadWordList(string fileName)
         {
             var resourceName = typeof(TextResourceLoader).Namespace + ".TextResource." + fileName;
@@ -25,7 +27,7 @@ namespace TriesSharp.Tests.UnitTestProject1
             while ((nextChar = reader.Read()) >= 0)
             {
                 var c = (char)nextChar;
-                if (char.IsSeparator(c))
+                if (char.IsWhiteSpace(c))
                 {
                     if (sb.Length > 0)
                     {

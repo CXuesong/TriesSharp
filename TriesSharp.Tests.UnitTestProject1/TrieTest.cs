@@ -24,10 +24,16 @@ public class TrieTest
     [InlineData(TextResourceLoader.ShijiSnippet1, 10)]
     [InlineData(TextResourceLoader.ShijiSnippet1, 100)]
     [InlineData(TextResourceLoader.ShijiSnippet1, -1)]
+    [InlineData(TextResourceLoader.WiktionaryTopFreq1000, -1)]
     public void DictionaryApiTest(string fileName, int wordCount)
     {
         var baseline = new Dictionary<string, int>();
         var trie = new Trie<int>();
+        AssertStateEquality();
+
+        // Corner case: empty key.
+        baseline.Add("", -1);
+        trie.Add("", -1);
         AssertStateEquality();
 
         var wordList = TextResourceLoader.LoadWordList(fileName);
@@ -86,6 +92,45 @@ public class TrieTest
                 iterations++;
             }
             Assert.Equal(baseline.Count, iterations);
+        }
+    }
+
+    [Fact]
+    public void TriePrefixTest()
+    {
+        var trie = new Trie<int>();
+        var wordList = TextResourceLoader.LoadWordList(TextResourceLoader.WiktionaryTopFreq1000);
+        for (var i = 0; i < wordList.Count; i++)
+        {
+            var w = wordList[i];
+            trie.Add(w, i);
+        }
+
+        // Access all prefix combinations with 2 letters.
+        var keyBuffer = new char[2];
+        for (var i = 'A'; i < 'z'; i++)
+        {
+            keyBuffer[0] = i;
+            AssertPrefix(keyBuffer.AsMemory(0, 1));
+            for (var j = 'A'; j < 'z'; j++)
+            {
+                keyBuffer[1] = j;
+                AssertPrefix(keyBuffer.AsMemory());
+            }
+        }
+
+        // Corner case: "" can be a valid key!
+        Assert.Equal(wordList.Count, trie.EnumEntriesFromPrefix("").Count());
+        trie.Add("", -1);
+        Assert.Equal(wordList.Count + 1, trie.EnumEntriesFromPrefix("").Count());
+        Assert.Contains(trie.EnumEntriesFromPrefix(""), p => p.Key.IsEmpty && p.Value == -1);
+
+        void AssertPrefix(ReadOnlyMemory<char> prefix)
+        {
+            var expected = wordList.Where(w => w.AsSpan().StartsWith(prefix.Span, StringComparison.Ordinal)).ToHashSet();
+            Output.WriteLine("AssertPrefix: {0} ({1})", prefix, expected.Count);
+            var actual = trie.EnumEntriesFromPrefix(prefix).Select(p => p.Key.ToString()).ToHashSet();
+            Assert.Equal(expected, actual);
         }
     }
 }

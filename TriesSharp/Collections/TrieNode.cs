@@ -84,13 +84,13 @@ internal sealed class TrieNode<TValue>
         var reallocatedBuffer = false;
         try
         {
-            if (this.children == null)
+            Debug.Assert(this.children != null || this.HasValue, "If the node has no value and no child, it shouldn't be exist.");
+            if (this.HasValue)
             {
-                // Shortcut: we don't need to assign new memory for keys.
-                Debug.Assert(this.HasValue, "If the node has no value and no child, it shouldn't be exist.");
                 yield return KeyValuePair.Create(keyBuffer == null ? default : new ReadOnlyMemory<char>(keyBuffer, 0, prefixLength), this.Value);
-                yield break;
             }
+            // Shortcut: we may not need to assign new memory for keys.
+            if (this.children == null) yield break;
             var nodeStack = new Stack<TrieNode<TValue>>();
             var childIndexStack = new Stack<int>();
             nodeStack.Push(this);
@@ -145,6 +145,7 @@ internal sealed class TrieNode<TValue>
     public void TrimExcess()
     {
         if (this.children == null) return;
+        this.children.TrimExcess();
         var nodeStack = new Stack<TrieNode<TValue>>();
         var childIndexStack = new Stack<int>();
         nodeStack.Push(this);

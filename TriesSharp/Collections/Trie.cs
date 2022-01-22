@@ -257,6 +257,14 @@ public class Trie<TValue> : ITrie<TValue>
         return node.EnumDescendants(buffer, prefix.Length);
     }
 
+    /// <inheritdoc />
+    public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> EnumEntriesFromPrefix(ReadOnlyMemory<char> prefix)
+        => EnumEntriesFromPrefix(prefix.Span);
+
+    /// <inheritdoc />
+    public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> EnumEntriesFromPrefix(string prefix)
+        => EnumEntriesFromPrefix(prefix.AsSpan());
+
     public void TrimExcess()
     {
         root.TrimExcess();

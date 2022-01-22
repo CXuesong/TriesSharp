@@ -8,10 +8,18 @@ namespace TriesSharp.Collections;
 
 public partial class Trie<TValue> : ITrie<TValue>
 {
+    private const int EnumerableMaxKeyBufferLength = 512;
+
     private readonly TrieNode<TValue> root;
     private int _Count;
     private int _LongestPossibleKeyLength;
-    private const int EnumerableMaxKeyBufferLength = 512;
+
+    public Trie()
+    {
+        root = new TrieNode<TValue>();
+        Keys = new KeyCollection(this);
+        Values = new ValueCollection(this);
+    }
 
     /// <inheritdoc />
     public void Add(ReadOnlySpan<char> key, TValue value)
@@ -145,10 +153,27 @@ public partial class Trie<TValue> : ITrie<TValue>
     public bool ContainsKey(ReadOnlyMemory<char> key) => ContainsKey(key.Span);
 
     /// <inheritdoc />
-    public ICollection<ReadOnlyMemory<char>> Keys { get; } = new KeyCollection();
+    public bool ContainsKey(string key) => ContainsKey(key.AsSpan());
+
+    public bool ContainsValue(TValue value)
+    {
+        var comparer = EqualityComparer<TValue>.Default;
+        foreach (var (_, v) in this.root.EnumDescendants(null, 0))
+        {
+            if (comparer.Equals(v, value)) return true;
+        }
+        return false;
+    }
+
+    public KeyCollection Keys { get; }
+
+    public ValueCollection Values { get; }
 
     /// <inheritdoc />
-    public ICollection<TValue> Values { get; } = new ValueCollection();
+    ICollection<ReadOnlyMemory<char>> IDictionary<ReadOnlyMemory<char>, TValue>.Keys => Keys;
+
+    /// <inheritdoc />
+    ICollection<TValue> IDictionary<ReadOnlyMemory<char>, TValue>.Values => Values;
 
     /// <inheritdoc cref="ITrie{TValue}.this[ReadOnlySpan{char}]" />
     public TValue this[ReadOnlySpan<char> key]
@@ -188,7 +213,7 @@ public partial class Trie<TValue> : ITrie<TValue>
         return true;
     }
 
-    /// <inheritdoc cref="ITrie{TValue}.TryGetValue(ReadOnlyMemory{char},out TValue)" />
+    /// <inheritdoc cref="IDictionary{TKey,TValue}.TryGetValue" />
     public bool TryGetValue(ReadOnlyMemory<char> key, [MaybeNullWhen(false)] out TValue value) => TryGetValue(key.Span, out value);
 
     /// <inheritdoc />
@@ -229,105 +254,102 @@ public partial class Trie<TValue> : ITrie<TValue>
     /// <inheritdoc />
     IEnumerable<TValue> IReadOnlyDictionary<ReadOnlyMemory<char>, TValue>.Values => Values;
 
-    private sealed class KeyCollection : ICollection<ReadOnlyMemory<char>>
+    public sealed class KeyCollection : ICollection<ReadOnlyMemory<char>>
     {
-        /// <inheritdoc />
-        public IEnumerator<ReadOnlyMemory<char>> GetEnumerator()
+        private readonly Trie<TValue> owner;
+
+        internal KeyCollection(Trie<TValue> owner)
         {
-            throw new NotImplementedException();
+            Debug.Assert(owner != null);
+            this.owner = owner;
         }
 
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public IEnumerator<ReadOnlyMemory<char>> GetEnumerator() 
+            => owner.Select(p => p.Key).GetEnumerator();
 
         /// <inheritdoc />
-        public void Add(ReadOnlyMemory<char> item)
-        {
-            throw new NotImplementedException();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <inheritdoc />
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
+        void ICollection<ReadOnlyMemory<char>>.Add(ReadOnlyMemory<char> item) => throw new InvalidOperationException();
 
         /// <inheritdoc />
-        public bool Contains(ReadOnlyMemory<char> item)
-        {
-            throw new NotImplementedException();
-        }
+        void ICollection<ReadOnlyMemory<char>>.Clear() => throw new InvalidOperationException();
+
+        /// <inheritdoc />
+        bool ICollection<ReadOnlyMemory<char>>.Contains(ReadOnlyMemory<char> item) => owner.ContainsKey(item);
 
         /// <inheritdoc />
         public void CopyTo(ReadOnlyMemory<char>[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            if (array == null) throw new ArgumentNullException(nameof(array));
+            if (arrayIndex < 0) throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            if (arrayIndex + owner._Count > array.Length) throw new ArgumentException("Target array does not have sufficient space available.");
+            var i = arrayIndex;
+            foreach (var (key, _) in owner)
+            {
+                array[i] = new ReadOnlyMemory<char>(key.ToArray());
+                i++;
+            }
         }
 
         /// <inheritdoc />
-        public bool Remove(ReadOnlyMemory<char> item)
-        {
-            throw new NotImplementedException();
-        }
+        bool ICollection<ReadOnlyMemory<char>>.Remove(ReadOnlyMemory<char> item) => throw new InvalidOperationException();
 
         /// <inheritdoc />
-        public int Count { get; }
+        public int Count => owner._Count;
 
         /// <inheritdoc />
-        public bool IsReadOnly { get; }
+        bool ICollection<ReadOnlyMemory<char>>.IsReadOnly => false;
     }
 
-    private sealed class ValueCollection : ICollection<TValue>
+    public sealed class ValueCollection : ICollection<TValue>
     {
-        /// <inheritdoc />
-        public IEnumerator<TValue> GetEnumerator()
+        private readonly Trie<TValue> owner;
+
+        internal ValueCollection(Trie<TValue> owner)
         {
-            throw new NotImplementedException();
+            this.owner = owner;
         }
 
         /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
+        public IEnumerator<TValue> GetEnumerator() 
+            => owner.root.EnumDescendants(null, 0).Select(p => p.Value).GetEnumerator();
 
         /// <inheritdoc />
-        public void Add(TValue item)
-        {
-            throw new NotImplementedException();
-        }
+        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
         /// <inheritdoc />
-        public void Clear()
-        {
-            throw new NotImplementedException();
-        }
+        void ICollection<TValue>.Add(TValue item) => throw new InvalidOperationException();
 
         /// <inheritdoc />
-        public bool Contains(TValue item)
-        {
-            throw new NotImplementedException();
-        }
+        void ICollection<TValue>.Clear() => throw new InvalidOperationException();
+
+        /// <inheritdoc />
+        public bool Contains(TValue item) => owner.ContainsValue(item);
 
         /// <inheritdoc />
         public void CopyTo(TValue[] array, int arrayIndex)
         {
-            throw new NotImplementedException();
+            if (array == null) throw new ArgumentNullException(nameof(array));
+            if (arrayIndex < 0) throw new ArgumentOutOfRangeException(nameof(arrayIndex));
+            if (arrayIndex + owner._Count > array.Length) throw new ArgumentException("Target array does not have sufficient space available.");
+            var i = arrayIndex;
+            foreach (var (_, value) in owner)
+            {
+                array[i] = value;
+                i++;
+            }
         }
 
         /// <inheritdoc />
-        public bool Remove(TValue item)
-        {
-            throw new NotImplementedException();
-        }
+        bool ICollection<TValue>.Remove(TValue item) => throw new InvalidOperationException();
 
         /// <inheritdoc />
-        public int Count { get; }
+        public int Count => owner._Count;
 
         /// <inheritdoc />
-        public bool IsReadOnly { get; }
+        bool ICollection<TValue>.IsReadOnly => false;
     }
 }

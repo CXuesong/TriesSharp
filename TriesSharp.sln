@@ -7,6 +7,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TriesSharp", "TriesSharp\Tr
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriesSharp.Tests.UnitTestProject1", "TriesSharp.Tests.UnitTestProject1\TriesSharp.Tests.UnitTestProject1.csproj", "{8FE2D318-36ED-413B-9137-C2DC7A2B3248}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution Files", "{36981CD3-EBC0-4DC8-BAAE-01AF585B57FB}"
+	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+		TriesSharp.Commons\TriesSharp.Commons.props = TriesSharp.Commons\TriesSharp.Commons.props
+		TriesSharp.Commons\TriesSharp.Packages.props = TriesSharp.Commons\TriesSharp.Packages.props
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

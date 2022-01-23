@@ -1,0 +1,59 @@
+name: TriesSharp CI
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+  schedule:
+    - cron: "23 0 * * 3"
+
+jobs:
+  build_and_test:
+    name: "Build & Test: ${{ matrix.os }} / ${{ matrix.config }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+        config: ["Debug", "Release"]
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      OCCS_IS_CI_BUILD: true
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: |
+            5.0.x
+            6.0.x
+      - name: Build
+        shell: pwsh
+        run: "./TriesSharp.Commons/CI/Build.ps1 -Configuration ${{ matrix.config }}"
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "TriesSharp-build-${{ matrix.os }}-${{ matrix.config }}"
+          path: ./TriesSharp.*/bin/
+      - name: Upload NuGet packages
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "TriesSharp-packages-${{ matrix.os }}-${{ matrix.config }}"
+          path: |
+            ./TriesSharp.*/bin/*/*.nupkg
+            ./TriesSharp.*/bin/*/*.snupkg
+      - name: Test
+        shell: pwsh
+        run: "./TriesSharp.Commons/CI/Test.ps1 -Configuration ${{ matrix.config }}"

@@ -200,6 +200,11 @@ public class Trie<TValue> : ITrie<TValue>
         set
         {
             var node = root.GetOrAddChild(key);
+            if (!node.HasValue)
+            {
+                _Count++;
+                _LongestPossibleKeyLength = Math.Max(_LongestPossibleKeyLength, key.Length);
+            }
             node.SetValue(value);
         }
     }
@@ -244,6 +249,14 @@ public class Trie<TValue> : ITrie<TValue>
         }
         return (lastMatchPrefixLength, lastMatch == null ? default! : lastMatch.Value);
     }
+
+    /// <inheritdoc />
+    public (int PrefixLength, TValue value) MatchLongestPrefix(ReadOnlyMemory<char> query)
+        => MatchLongestPrefix(query.Span);
+
+    /// <inheritdoc />
+    public (int PrefixLength, TValue value) MatchLongestPrefix(string query)
+        => MatchLongestPrefix(query.AsSpan());
 
     /// <inheritdoc />
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> EnumEntriesFromPrefix(ReadOnlySpan<char> prefix)

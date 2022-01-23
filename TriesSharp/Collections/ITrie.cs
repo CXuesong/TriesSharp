@@ -72,7 +72,7 @@ public interface IReadOnlyTrie<TValue> : IReadOnlyDictionary<ReadOnlyMemory<char
         => TryGetValue(key.AsSpan(), out value);
 
     /// <summary>
-    /// Retrieves the value under the key matching the longest prefix of the specified query.
+    /// Retrieves the key that matches the longest prefix of the specified query.
     /// </summary>
     /// <param name="query">a character sequence.</param>
     /// <returns>

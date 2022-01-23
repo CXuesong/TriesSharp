@@ -45,13 +45,17 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: "TriesSharp-build-${{ matrix.os }}-${{ matrix.config }}"
-          path: ./TriesSharp.*/bin/
+          path: |
+            ./TriesSharp/bin/
+            ./TriesSharp.*/bin/
       - name: Upload NuGet packages
         if: always()
         uses: actions/upload-artifact@v2
         with:
           name: "TriesSharp-packages-${{ matrix.os }}-${{ matrix.config }}"
           path: |
+            ./TriesSharp/bin/*/*.nupkg
+            ./TriesSharp/bin/*/*.snupkg
             ./TriesSharp.*/bin/*/*.nupkg
             ./TriesSharp.*/bin/*/*.snupkg
       - name: Test

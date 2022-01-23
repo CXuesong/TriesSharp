@@ -9,7 +9,7 @@
     <FileVersion>0.0.1.0</FileVersion>
     <Copyright>Copyright (C) CXuesong 2022</Copyright>
     <PackageReleaseNotes>See https://github.com/CXuesong/TriesSharp/releases .</PackageReleaseNotes>
-    <PackageTags>OpenCC Chinese Text Conversion</PackageTags>
+    <PackageTags>Trie</PackageTags>
     <NeutralLanguage>en-us</NeutralLanguage>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageProjectUrl>https://github.com/CXuesong/TriesSharp</PackageProjectUrl>

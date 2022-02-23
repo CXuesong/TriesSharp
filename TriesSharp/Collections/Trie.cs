@@ -41,7 +41,7 @@ public class Trie<TValue> : ITrie<TValue>
         => Add(key.AsSpan(), value);
 
     /// <inheritdoc />
-    public void Add(KeyValuePair<ReadOnlyMemory<char>, TValue> item)
+    void ICollection<KeyValuePair<ReadOnlyMemory<char>, TValue>>.Add(KeyValuePair<ReadOnlyMemory<char>, TValue> item)
         => Add(item.Key.Span, item.Value);
 
     /// <inheritdoc />

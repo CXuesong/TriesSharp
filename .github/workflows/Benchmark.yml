@@ -1,0 +1,51 @@
+name: TriesSharp Benchmark
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+  pull_request:
+    branches:
+      - main
+    paths-ignore:
+      - "*.md"
+      - "*.txt"
+  schedule:
+    - cron: "12 0 1 * *"
+
+jobs:
+  benchmark:
+    name: "Benchmark ${{ matrix.os }} / ${{ matrix.config }}"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      matrix:
+        os: ["ubuntu-latest", "windows-latest"]
+        config: ["Release"]
+    env:
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+      DOTNET_CLI_TELEMETRY_OPTOUT: 1
+      TS_IS_CI_BUILD: true
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: true
+      - uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: |
+            5.0.x
+            6.0.x
+      - name: Build
+        shell: pwsh
+        run: "./TriesSharp.Commons/CI/Build.ps1 -Configuration ${{ matrix.config }}"
+      - name: Benchmark
+        shell: pwsh
+        run: "./TriesSharp.Commons/CI/Benchmark.ps1 -Configuration ${{ matrix.config }}"
+      - name: Upload benchmark result
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: "TriesSharp.Benchmark-${{ matrix.os }}-${{ matrix.config }}"
+          path: ./BenchmarkDotNet.Artifacts

@@ -5,7 +5,7 @@ VisualStudioVersion = 17.1.32104.313
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TriesSharp", "TriesSharp\TriesSharp.csproj", "{4C125005-42BA-4570-ABE9-95F341EDD926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriesSharp.Tests.UnitTestProject1", "TriesSharp.Tests.UnitTestProject1\TriesSharp.Tests.UnitTestProject1.csproj", "{8FE2D318-36ED-413B-9137-C2DC7A2B3248}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TriesSharp.Tests.UnitTestProject1", "TriesSharp.Tests.UnitTestProject1\TriesSharp.Tests.UnitTestProject1.csproj", "{8FE2D318-36ED-413B-9137-C2DC7A2B3248}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution Files", "{36981CD3-EBC0-4DC8-BAAE-01AF585B57FB}"
 	ProjectSection(SolutionItems) = preProject
@@ -16,6 +16,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution 
 		TriesSharp.Commons\TriesSharp.Commons.props = TriesSharp.Commons\TriesSharp.Commons.props
 		TriesSharp.Commons\TriesSharp.Packages.props = TriesSharp.Commons\TriesSharp.Packages.props
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TriesSharp.Benchmarking", "TriesSharp.Benchmarking\TriesSharp.Benchmarking.csproj", "{5D6B7D75-F507-479D-BEFE-01F4AF314DBD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,6 +33,10 @@ Global
 		{8FE2D318-36ED-413B-9137-C2DC7A2B3248}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FE2D318-36ED-413B-9137-C2DC7A2B3248}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FE2D318-36ED-413B-9137-C2DC7A2B3248}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5D6B7D75-F507-479D-BEFE-01F4AF314DBD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5D6B7D75-F507-479D-BEFE-01F4AF314DBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5D6B7D75-F507-479D-BEFE-01F4AF314DBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5D6B7D75-F507-479D-BEFE-01F4AF314DBD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

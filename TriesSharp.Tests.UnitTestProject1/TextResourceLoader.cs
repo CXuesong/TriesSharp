@@ -17,6 +17,8 @@ namespace TriesSharp.Tests.UnitTestProject1
 
         public const string WiktionaryTopFreq1000 = "Wiktionary1000.txt";
 
+        public const string OpenCCSTPhrases = "STPhrases.txt";
+
         public static List<string> LoadWordList(string fileName)
         {
             var resourceName = typeof(TextResourceLoader).Namespace + ".TextResource." + fileName;

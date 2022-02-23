@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using BenchmarkDotNet.Attributes;
 using TriesSharp.Collections;
 
@@ -9,18 +10,29 @@ public class TrieBenchmarks
 
     [Benchmark]
     [ArgumentsSource(nameof(GetLoadTrieTestArguments))]
-    public void LoadTrie(List<string> wordList)
+    public void LoadTrie(LoadTrieTestArguments args)
     {
         var trie = new Trie<int>();
-        for (int i = 0; i < wordList.Count; i++)
-            trie[wordList[i]] = i;
+        var list = args.wordList;
+        for (int i = 0; i < list.Count; i++)
+            trie.Add(list[i], i);
     }
 
-    public static IEnumerable<List<string>> GetLoadTrieTestArguments()
+    public static IEnumerable<LoadTrieTestArguments> GetLoadTrieTestArguments()
     {
-        yield return TextResourceLoader.LoadWordList(TextResourceLoader.ShijiSnippet1);
-        yield return TextResourceLoader.LoadWordList(TextResourceLoader.TaleOfTwoCities1);
-        yield return TextResourceLoader.LoadWordList(TextResourceLoader.WiktionaryTopFreq1000);
+        static LoadTrieTestArguments BuildCase(string fileName)
+            => new(fileName, TextResourceLoader.LoadWordList(fileName).Distinct().ToList());
+
+        yield return BuildCase(TextResourceLoader.ShijiSnippet1);
+        yield return BuildCase(TextResourceLoader.TaleOfTwoCities1);
+        yield return BuildCase(TextResourceLoader.WiktionaryTopFreq1000);
+        yield return BuildCase(TextResourceLoader.OpenCCSTPhrases);
     }
 
+    public record LoadTrieTestArguments(string name, List<string> wordList)
+    {
+        /// <inheritdoc />
+        public override string ToString() => $"{name} ({wordList.Count} words)";
+    }
+    
 }

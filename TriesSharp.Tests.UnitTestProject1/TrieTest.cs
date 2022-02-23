@@ -25,6 +25,7 @@ public class TrieTest
     [InlineData(TextResourceLoader.ShijiSnippet1, 100)]
     [InlineData(TextResourceLoader.ShijiSnippet1, -1)]
     [InlineData(TextResourceLoader.WiktionaryTopFreq1000, -1)]
+    [InlineData(TextResourceLoader.OpenCCSTPhrases, 1000)]
     public void DictionaryApiTest(string fileName, int wordCount)
     {
         var baseline = new Dictionary<string, int>();

@@ -14,12 +14,12 @@ public class Trie<TValue> : ITrie<TValue>
     private readonly TrieNode<TValue> root;
     private int _Count;
     private int _LongestPossibleKeyLength;
+    private KeyCollection? _Keys;
+    private ValueCollection? _Values;
 
     public Trie()
     {
         root = new TrieNode<TValue>();
-        Keys = new KeyCollection(this);
-        Values = new ValueCollection(this);
     }
 
     /// <inheritdoc />
@@ -177,9 +177,9 @@ public class Trie<TValue> : ITrie<TValue>
         return false;
     }
 
-    public KeyCollection Keys { get; }
+    public KeyCollection Keys => _Keys ??= new KeyCollection(this);
 
-    public ValueCollection Values { get; }
+    public ValueCollection Values => _Values ??= new ValueCollection(this);
 
     /// <inheritdoc />
     ICollection<ReadOnlyMemory<char>> IDictionary<ReadOnlyMemory<char>, TValue>.Keys => Keys;

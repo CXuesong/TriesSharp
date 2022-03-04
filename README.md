@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/CXuesong/TriesSharp/actions/workflows/TriesSharp.yml/badge.svg?branch=main)](https://github.com/CXuesong/OpenCCSharp/actions/workflows/OpenCCSharp.yml) | [![NuGet version (CXuesong.TriesSharp)](https://img.shields.io/nuget/vpre/CXuesong.TriesSharp.svg?style=flat-square) ![NuGet version (CXuesong.TriesSharp)](https://img.shields.io/nuget/dt/CXuesong.TriesSharp.svg?style=flat-square)](https://www.nuget.org/packages/CXuesong.TriesSharp)
+[![Build Status](https://github.com/CXuesong/TriesSharp/actions/workflows/TriesSharp.yml/badge.svg?branch=main)](https://github.com/CXuesong/TriesSharp/actions/workflows/TriesSharp.yml) | [![NuGet version (CXuesong.TriesSharp)](https://img.shields.io/nuget/vpre/CXuesong.TriesSharp.svg?style=flat-square) ![NuGet version (CXuesong.TriesSharp)](https://img.shields.io/nuget/dt/CXuesong.TriesSharp.svg?style=flat-square)](https://www.nuget.org/packages/CXuesong.TriesSharp)
 
 # TriesSharp
 

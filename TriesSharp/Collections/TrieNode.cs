@@ -8,11 +8,11 @@ namespace TriesSharp.Collections;
 internal sealed class TrieNode<TValue>
 {
 
+    private SortedListLite<char, TrieNode<TValue>> children;
+
     public TValue Value { get; private set; } = default!;
 
-    public bool HasValue { get; private set; }
-
-    private SortedListLite<char, TrieNode<TValue>> children;
+    public bool HasValue => children.Flag;
 
     public TrieNode()
     {
@@ -22,13 +22,13 @@ internal sealed class TrieNode<TValue>
     public void SetValue(TValue value)
     {
         Value = value;
-        HasValue = true;
+        children.Flag = true;
     }
 
     public bool UnsetValue()
     {
         if (!HasValue) return false;
-        HasValue = false;
+        children.Flag = false;
         Value = default!;
         return true;
     }

@@ -6,37 +6,52 @@ using System.Runtime.CompilerServices;
 namespace TriesSharp.Collections;
 
 /// <summary>
-/// A home-made SortedList counterpart to reduce memory allocation.
+/// A home-made SortedList counterpart to reduce memory allocation of TrieNode.
 /// </summary>
-[DebuggerDisplay("Count = {Count}")]
+[DebuggerDisplay("Count = {Count}; Flag = {Flag}")]
 internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, TValue>>
     where TValue : new()
 {
     private const int DefaultCapacity = 4;
+    private const uint CountMask = 0x7FFF_FFFFU;
+    private const uint FlagMask = 0x8000_0000U;
     private TKey[] keys;
     private TValue[] values;
-    private int count;
+    private uint countWithFlag;
 
     public void Clear()
     {
         keys = Array.Empty<TKey>();
         values = Array.Empty<TValue>();
-        count = 0;
+        countWithFlag = 0;
     }
 
-    public int Count => count;
+    public int Count => (int)(countWithFlag & CountMask);
+
+    public bool Flag
+    {
+        get => (countWithFlag & FlagMask) != 0;
+        set
+        {
+            if (value)
+                countWithFlag |= FlagMask;
+            else
+                countWithFlag &= ~FlagMask;
+        }
+    }
 
     public int Capacity
     {
         get => keys.Length;
         set
         {
-            Debug.Assert(value >= count);
+            Debug.Assert(value >= Count);
             if (value == keys.Length) return;
             if (value > 0)
             {
                 var newKeys = GC.AllocateUninitializedArray<TKey>(value);
                 var newValues = GC.AllocateUninitializedArray<TValue>(value);
+                var count = Count;
                 Array.Copy(keys, newKeys, count);
                 Array.Copy(values, newValues, count);
                 keys = newKeys;
@@ -52,13 +67,14 @@ internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, 
 
     public void TrimExcess()
     {
+        var count = Count;
         if (keys.Length - count >= keys.Length / 10)
             Capacity = count;
     }
 
     public TValue GetOrAddDefault(TKey key)
     {
-        var index = Array.BinarySearch(keys, 0, count, key);
+        var index = Array.BinarySearch(keys, 0, Count, key);
         if (index < 0)
         {
             index = ~index;
@@ -70,7 +86,7 @@ internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, 
     public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
     {
         Debug.Assert(keys.Length == values.Length);
-        var index = Array.BinarySearch(keys, 0, count, key);
+        var index = Array.BinarySearch(keys, 0, Count, key);
         if (index < 0)
         {
             value = default;
@@ -83,9 +99,11 @@ internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, 
     public bool Remove(TKey key)
     {
         Debug.Assert(keys.Length == values.Length);
+        var count = Count;
         var index = Array.BinarySearch(keys, 0, count, key);
         if (index < 0) return false;
         count--;
+        countWithFlag--;
         if (index < count)
         {
             // count = 6
@@ -102,7 +120,9 @@ internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, 
 
     private void InsertAt(int index, TKey key, TValue value)
     {
+        Debug.Assert(index >= 0);
         Debug.Assert(keys.Length == values.Length);
+        var count = Count;
         if (keys.Length <= count)
         {
             // Extend storage.
@@ -118,25 +138,25 @@ internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, 
         }
         keys[index] = key;
         values[index] = value;
-        count++;
+        countWithFlag++;
     }
 
     public TKey GetKeyAt(int index)
     {
-        Debug.Assert(index < count);
+        Debug.Assert(index < Count);
         return keys[index];
     }
 
     public TValue GetValueAt(int index)
     {
-        Debug.Assert(index < count);
+        Debug.Assert(index < Count);
         return values[index];
     }
 
     /// <inheritdoc />
     public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
     {
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < Count; i++)
             yield return KeyValuePair.Create(keys[i], values[i]);
     }
 

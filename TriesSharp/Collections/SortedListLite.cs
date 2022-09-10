@@ -7,6 +7,7 @@ namespace TriesSharp.Collections;
 
 /// <summary>
 /// A home-made SortedList counterpart to reduce memory allocation of TrieNode.
+/// This structure contains a sorted list and a boolean flag.
 /// </summary>
 [DebuggerDisplay("Count = {Count}; Flag = {Flag}")]
 internal struct SortedListLite<TKey, TValue> : IReadOnlyList<KeyValuePair<TKey, TValue>>

@@ -8,7 +8,7 @@ namespace TriesSharp.Collections;
 internal sealed class TrieNode<TValue>
 {
 
-    private SortedListLite<char, TrieNode<TValue>> children;
+    internal SortedListLite<char, TrieNode<TValue>> children;
 
     public TValue Value { get; private set; } = default!;
 
@@ -73,14 +73,14 @@ internal sealed class TrieNode<TValue>
     }
 
     public int ChildrenCount => children.Count;
-
+    
     public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> EnumDescendants(char[]? keyBuffer, int prefixLength)
     {
         // n.b. keyBuffer will always be the same old keyBuffer reference ever time user re-iterates.
         var reallocatedBuffer = false;
         try
         {
-            Debug.Assert(this.children.Count > 0 || this.HasValue, "If the node has no value and no child, it shouldn't be exist.");
+            Debug.Assert(this.children.Count > 0 || this.HasValue, "If the node has no value and no child, it shouldn't exist.");
             if (this.HasValue)
             {
                 yield return KeyValuePair.Create(keyBuffer == null ? default : new ReadOnlyMemory<char>(keyBuffer, 0, prefixLength), this.Value);

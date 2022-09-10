@@ -22,6 +22,17 @@ public class Trie<TValue> : ITrie<TValue>
         root = new TrieNode<TValue>();
     }
 
+    internal Trie(TrieNode<TValue> root, int count, int longestPossibleKeyLength)
+    {
+        Debug.Assert(root != null);
+        this.root = root;
+        _Count = count;
+        _LongestPossibleKeyLength = longestPossibleKeyLength;
+    }
+
+    // Do not change the content of root node. Use Trie`3 constructor instead.
+    internal TrieNode<TValue> GetRootNode() => root;
+
     /// <inheritdoc />
     public void Add(ReadOnlySpan<char> key, TValue value)
     {

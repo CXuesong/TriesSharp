@@ -4,9 +4,9 @@
   <PropertyGroup>
     <!-- Here are the default targets. Projects may override on this value with higher requirements. -->
     <TargetFrameworks>net6.0</TargetFrameworks>
-    <Version>0.0.1-int.2</Version>
-    <AssemblyVersion>0.0.1.2</AssemblyVersion>
-    <FileVersion>0.0.1.2</FileVersion>
+    <Version>0.0.1-int.3</Version>
+    <AssemblyVersion>0.0.1.3</AssemblyVersion>
+    <FileVersion>0.0.1.3</FileVersion>
     <Copyright>Copyright (C) CXuesong 2022</Copyright>
     <PackageReleaseNotes>See https://github.com/CXuesong/TriesSharp/releases .</PackageReleaseNotes>
     <PackageTags>Trie</PackageTags>

@@ -4,15 +4,18 @@ using System.Text;
 namespace TriesSharp.Collections;
 
 /// <summary>
-/// Represents a memory-efficient serialization and deserialization support for <see cref="Trie{TValue}"/> with <c>ReadOnlyMemory&lt;char&gt;</c> as values.
+/// Represents a memory-efficient serialization and deserialization support for <see cref="Trie{TValue}"/> with certain types of values.
 /// </summary>
-public static class StringTrieSerializer
+/// <remarks>
+/// For now, only values of <c>ReadOnlyMemory&lt;char&gt;</c> is supported.
+/// </remarks>
+public static class TrieSerializer
 {
 
     private const uint streamMagicHeader = 0x54726948;
     private const uint serializationVersionHeader = 0x000001;
 
-    public static ValueTask Serialize(Trie<ReadOnlyMemory<char>> trie, Stream stream)
+    public static ValueTask Serialize(Stream stream, Trie<ReadOnlyMemory<char>> trie)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
         writer.Write(streamMagicHeader);
@@ -34,7 +37,7 @@ public static class StringTrieSerializer
             // 1: ChildrenCount
             writer.Write7BitEncodedInt(node.ChildrenCount);
             // 2..(2+n): Children keys
-            foreach (var child in node.children) writer.Write(child.Key);
+            foreach (var child in node.children) writer.Write7BitEncodedInt(child.Key);
             // (2+n)..(2+2n): Node content
             foreach (var child in node.children) SerializeNode(child.Value);
         }
@@ -87,7 +90,7 @@ public static class StringTrieSerializer
             node.children.Capacity = childrenCount;
             // 2..(2+n): Children keys
             for (int i = 0; i < childrenCount; i++)
-                node.children.GetOrAddDefault(reader.ReadChar());
+                node.children.GetOrAddDefault((char)reader.Read7BitEncodedInt());
             // (2+n)..(2+2n): Node content
             for (int i = 0; i < childrenCount; i++)
                 DeserializeNode(node.children.GetValueAt(i));

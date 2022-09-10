@@ -404,6 +404,7 @@ public class Trie<TValue> : ITrie<TValue>
 
     private sealed class DebuggerProxy
     {
+
         private readonly Trie<TValue> trie;
 
         public DebuggerProxy(Trie<TValue> trie)
@@ -412,6 +413,21 @@ public class Trie<TValue> : ITrie<TValue>
         }
 
         public TrieNode<TValue> Root => trie.root;
+
+        public int Count => trie.Count;
+
+        [DebuggerBrowsable(DebuggerBrowsableState.RootHidden)]
+        public IEnumerable<KeyValuePair<ReadOnlyMemory<char>, TValue>> Items
+        {
+            get
+            {
+                foreach (var p in this.trie)
+                {
+                    yield return new(p.Key.ToArray(), p.Value);
+                }
+            }
+        }
+
     }
 
 }

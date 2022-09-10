@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using BenchmarkDotNet.Attributes;
+﻿using BenchmarkDotNet.Attributes;
 using TriesSharp.Collections;
 
 namespace TriesSharp.Tests.UnitTestProject1.Benchmarks;

@@ -31,7 +31,7 @@ public class TrieSerializerBenchmarks
                 trie.Add(w.AsMemory(), w.Reverse().ToArray());
             var ms = new MemoryStream();
             TrieSerializer.Serialize(ms, trie);
-            return new(fileName, trie, ms);
+            return new(fileName, trie, ms, (int)ms.Length);
         }
 
         yield return BuildCase(TextResourceLoader.ShijiSnippet1);
@@ -40,10 +40,12 @@ public class TrieSerializerBenchmarks
         yield return BuildCase(TextResourceLoader.OpenCCSTPhrases);
     }
 
-    public record SerializeTrieTestArguments(string name, Trie<ReadOnlyMemory<char>> trie, MemoryStream serializedStream)
+    public record SerializeTrieTestArguments(string name, Trie<ReadOnlyMemory<char>> trie, MemoryStream serializedStream, int serializedSize)
     {
+
         /// <inheritdoc />
-        public override string ToString() => $"{name} ({trie.Count} items)";
+        public override string ToString() => $"{name} ({trie.Count} items) ({serializedSize:N} B)";
+
     }
 
 }

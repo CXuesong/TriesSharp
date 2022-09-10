@@ -18,8 +18,20 @@ public static class TrieSerializer
     public static ValueTask Serialize(Stream stream, Trie<ReadOnlyMemory<char>> trie)
     {
         using var writer = new BinaryWriter(stream, Encoding.UTF8, true);
+        // 0: Header magic
         writer.Write(streamMagicHeader);
+        // 1: Serialization version
         writer.Write(serializationVersionHeader);
+        // 2: Reserved
+        writer.Write(0U);
+        writer.Flush();
+        // 3: value pool size hint
+        var valuePoolSizeHintPos = stream.CanSeek ? stream.Position : -1;
+        var valuePoolSizeHint = 0;
+        // value pool size hint (we will try to rewind and fill this blank).
+        writer.Write(valuePoolSizeHint);
+        // 4: Reserved
+        writer.Write(0U);
 
         void SerializeNode(TrieNode<ReadOnlyMemory<char>> node)
         {
@@ -27,6 +39,7 @@ public static class TrieSerializer
             if (node.HasValue)
             {
                 writer.Write7BitEncodedInt(node.Value.Length + 1);
+                valuePoolSizeHint += node.Value.Length;
                 writer.Write(node.Value.Span);
             }
             else
@@ -43,22 +56,42 @@ public static class TrieSerializer
         }
 
         SerializeNode(trie.GetRootNode());
+        writer.Flush();
+
+        // Fill in the blank.
+        if (stream.CanSeek && valuePoolSizeHintPos >= 0)
+        {
+            var lastPos = stream.Position;
+            stream.Position = valuePoolSizeHintPos;
+            writer.Write(valuePoolSizeHint);
+            writer.Flush();
+            stream.Position = lastPos;
+        }
         return ValueTask.CompletedTask;
     }
 
     public static ValueTask<Trie<ReadOnlyMemory<char>>> Deserialize(Stream stream)
     {
         using var reader = new BinaryReader(stream, Encoding.UTF8, true);
-        var valuePoolWriter = new ArrayBufferWriter<char>(256);
-        var initialValuePoolRef = valuePoolWriter.WrittenMemory[..0];
-        var valueLengths = new Queue<int>();
-        var valueCount = 0;
-        var maxValueLength = 0;
 
+        // 0: Header magic
         var intValue = reader.ReadUInt32();
         if (intValue != streamMagicHeader) throw new InvalidDataException("Invalid magic header in key stream.");
+        // 1: Serialization version
         intValue = reader.ReadUInt32();
         if (intValue != serializationVersionHeader) throw new InvalidDataException("Invalid serialization version in key stream.");
+        // 2: Reserved
+        reader.ReadUInt32();
+        // 3: value pool size hint
+        var valuePoolSizeHint = reader.ReadInt32();
+        // 4: Reserved
+        reader.ReadUInt32();
+
+        var valuePoolWriter = new ArrayBufferWriter<char>(valuePoolSizeHint > 0 ? valuePoolSizeHint : 256);
+        var initialValuePoolRef = valuePoolWriter.WrittenMemory[..0];
+        var valueLengths = valuePoolSizeHint > 0 ? null : new Queue<int>();
+        var valueCount = 0;
+        var maxValueLength = 0;
 
         void DeserializeNode(TrieNode<ReadOnlyMemory<char>> node)
         {
@@ -67,7 +100,7 @@ public static class TrieSerializer
             if (valueLength > 0)
             {
                 // Has value
-                valueLengths.Enqueue(valueLength);
+                valueLengths?.Enqueue(valueLength);
                 valueCount++;
                 maxValueLength = Math.Max(maxValueLength, valueLength);
                 var memory = valuePoolWriter.GetMemory(valueLength)[..valueLength];
@@ -115,6 +148,8 @@ public static class TrieSerializer
         // Fix Memory references if ArrayBufferWriter has been reallocated.
         if (!valuePoolWriter.WrittenMemory[..0].Equals(initialValuePoolRef))
         {
+            if (valueLengths == null)
+                throw new InvalidDataException($"ValuePoolSizeHint value mismatch. Expect {valuePoolWriter.WrittenCount}; actual: {valuePoolSizeHint}.");
             FixNodeValueMemoryRef(root);
         }
         return ValueTask.FromResult(new Trie<ReadOnlyMemory<char>>(root, valueCount, maxValueLength));

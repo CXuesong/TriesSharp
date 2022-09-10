@@ -44,7 +44,7 @@ public class TrieSerializerBenchmarks
     {
 
         /// <inheritdoc />
-        public override string ToString() => $"{name} ({trie.Count} items) ({serializedSize:N} B)";
+        public override string ToString() => $"{name} ({trie.Count} items) ({serializedSize:N0} B)";
 
     }
 
